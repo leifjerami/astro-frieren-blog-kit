@@ -3,12 +3,29 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import Hero from "../components/Hero.astro";
 import Features from "../components/Features.astro";
 import Contact from "../components/Contact.astro";
-
 import LatestPosts from "../components/LatestPosts.astro";
 import { sortPostsByDate } from "../utils/data.util";
 
-const allPosts = await Astro.glob("./posts/*.md");
-allPosts.sort(sortPostsByDate);
+// Load posts using import.meta.glob
+const postModules = await import.meta.glob("./posts/*.md", { eager: true });
+const allPosts = Object.values(postModules)
+  .filter((post) => {
+    // Ensure required frontmatter fields exist and are valid
+    const hasTitle =
+      typeof post.frontmatter?.title === "string" &&
+      post.frontmatter.title.trim() !== "";
+    const hasPubDate =
+      post.frontmatter?.pubDate &&
+      !isNaN(new Date(post.frontmatter.pubDate).getTime());
+    if (!hasTitle || !hasPubDate) {
+      console.warn(
+        `Skipping post: ${post.file} - Missing or invalid title or pubDate`,
+      );
+      return false;
+    }
+    return true;
+  })
+  .sort(sortPostsByDate);
 const latestPosts = allPosts.slice(0, 3);
 ---
 

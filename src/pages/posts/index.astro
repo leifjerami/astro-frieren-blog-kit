@@ -4,8 +4,26 @@ import Section from "../../components/Section.astro";
 import Card from "../../components/Card.astro";
 import { sortPostsByDate } from "../../utils/data.util";
 
-const allPosts = await Astro.glob("./*.md");
-allPosts.sort(sortPostsByDate);
+// Load posts using import.meta.glob
+const postModules = await import.meta.glob("./*.md", { eager: true });
+const allPosts = Object.values(postModules)
+  .filter((post) => {
+    // Ensure required frontmatter fields exist and are valid
+    const hasTitle =
+      typeof post.frontmatter?.title === "string" &&
+      post.frontmatter.title.trim() !== "";
+    const hasPubDate =
+      post.frontmatter?.pubDate &&
+      !isNaN(new Date(post.frontmatter.pubDate).getTime());
+    if (!hasTitle || !hasPubDate) {
+      console.warn(
+        `Skipping post: ${post.file} - Missing or invalid title or pubDate`,
+      );
+      return false;
+    }
+    return true;
+  })
+  .sort(sortPostsByDate);
 ---
 
 <BaseLayout>
@@ -13,7 +31,7 @@ allPosts.sort(sortPostsByDate);
     <div class="flex flex-col items-center mt-6 mb-12">
       <p class="px-14 py-6 text-center text-4xl font-bold">All Posts</p>
       {
-        allPosts.map((post: any) => (
+        allPosts.map((post) => (
           <div class="my-6 basis-1 last:mb-0">
             <Card post={post} />
           </div>
