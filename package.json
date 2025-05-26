@@ -26,6 +26,7 @@
     "react-dom": "^18.3.1",
     "reading-time": "^1.5.0",
     "rehype-pretty-code": "^0.14.1",
+    "remark-reading-time": "^2.0.2",
     "rollup": "^4.41.1",
     "sharp": "^0.33.5",
     "tailwindcss": "^3.4.17",
