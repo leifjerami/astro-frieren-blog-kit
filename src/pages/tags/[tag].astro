@@ -7,22 +7,21 @@ import { AppConfig } from "../../utils/AppConfig";
 import type { MarkdownInstance } from "astro";
 
 export async function getStaticPaths(): Promise<any> {
-  const allPosts = await Astro.glob("../posts/*.md");
+  const postImporters = import.meta.glob("../posts/*.md");
+  const postModules = await Promise.all(
+    Object.values(postImporters).map((load) => load()),
+  );
+
+  const allPosts = postModules as MarkdownInstance<Record<string, any>>[];
 
   const allTags: Set<string> = new Set(
-    allPosts
-      .map(
-        (post: MarkdownInstance<Record<string, any>>) => post.frontmatter.tags,
-      )
-      .flat(),
+    allPosts.map((post) => post.frontmatter.tags).flat(),
   );
 
   return [...allTags].map((tag) => ({
-    params: { tag: tag },
+    params: { tag },
     props: {
-      posts: allPosts.filter((post: MarkdownInstance<Record<string, any>>) =>
-        post.frontmatter.tags.includes(tag),
-      ),
+      posts: allPosts.filter((post) => post.frontmatter.tags.includes(tag)),
     },
   }));
 }
@@ -45,8 +44,8 @@ const { posts } = Astro.props;
   <Section>
     {
       posts
-        .filter((post: any) => post.frontmatter.tags?.includes(tag))
-        .map((post: any) => (
+        .filter((post) => post.frontmatter.tags?.includes(tag))
+        .map((post) => (
           <div class="mb-4 basis-1 last:mb-0">
             <Card post={post} />
           </div>
